@@ -13,6 +13,15 @@
 
 namespace App\Models{
 /**
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Plan newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Plan newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Plan query()
+ */
+	class Plan extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
  * @property-read \Illuminate\Database\Eloquent\Model|\Eloquent $billable
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Paddle\SubscriptionItem> $items
  * @property-read int|null $items_count
@@ -87,7 +96,12 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * @property-read \Laravel\Paddle\Customer|null $customer
  * @property-read \App\Models\User|null $owner
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Subscription> $subscriptions
+ * @property-read int|null $subscriptions_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Transaction> $transactions
+ * @property-read int|null $transactions_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users
  * @property-read int|null $users_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Workspace newModelQuery()
@@ -99,6 +113,8 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * @property-read \App\Models\User|null $user
+ * @property-read \App\Models\Workspace|null $workspace
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkspaceUser newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkspaceUser newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|WorkspaceUser query()
