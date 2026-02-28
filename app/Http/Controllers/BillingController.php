@@ -9,14 +9,14 @@ use Laravel\Paddle\Cashier;
 
 class BillingController extends Controller {
     public function plans(Request $request) {
-        $plans     = Plan::where('slug', '!=', 'free')->get();
-        $workspace = Auth::user()->workspace;
-
+        $plans               = Plan::where('slug', '!=', 'free')->get();
+        $workspace           = Auth::user()->workspace;
+        $subscription        = $workspace->subscription('default');
         $currentPlanPaddleId = null;
         $portalUrl           = null;
         $response            = Cashier::api(
             method: 'POST',
-            uri: "customers/ctm_01kjjcaxfgaevapmdsfj1mm85c/portal-sessions"
+            uri: "customers/{$workspace->customer->paddle_id}/portal-sessions"
         );
 
         $url = $response['data']['urls']['general']['overview'] ?? null;
