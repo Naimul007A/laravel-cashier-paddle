@@ -13,6 +13,7 @@ return new class extends Migration {
             $table->id();
             $table->string('paddle_id')->unique();
             $table->string('name');
+            $table->string('slug')->unique();
             $table->decimal('price');
             $table->string("paddle_monthly_price_id")->nullable();
             $table->string("paddle_yearly_price_id")->nullable();

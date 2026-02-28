@@ -1,12 +1,10 @@
 <?php
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Laravel\Paddle\Billable;
 
-class Workspace extends Model
-{
+class Workspace extends Model {
     use Billable;
 
     protected $fillable = [
@@ -24,31 +22,30 @@ class Workspace extends Model
         'next_credit_reset',
     ];
 
-    public function owner()
-    {
+    public function owner() {
         return $this->belongsTo(User::class, 'owner_id');
     }
 
-    public function users()
-    {
+    public function users() {
         return $this->belongsToMany(User::class, 'workspace_users')
             ->withPivot('role', 'status')
             ->withTimestamps();
+    }
+    public function members() {
+        return $this->hasMany(WorkspaceUser::class);
     }
 
     /**
      * Get the customer's name to associate with Paddle.
      */
-    public function paddleName(): ?string
-    {
+    public function paddleName(): ?string {
         return $this->owner->name;
     }
 
     /**
      * Get the customer's email address to associate with Paddle.
      */
-    public function paddleEmail(): ?string
-    {
+    public function paddleEmail(): ?string {
         return $this->owner->email;
     }
 }

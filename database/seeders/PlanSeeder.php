@@ -36,6 +36,7 @@ class PlanSeeder extends Seeder {
             [
                 'paddle_id'               => 'pro-plus',
                 'name'                    => 'Pro+',
+                'slug'                    => 'pro-plus',
                 'price'                   => 30,
                 'yearly_offer_percentage' => 25,
                 'rate_limit'              => 120,

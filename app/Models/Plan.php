@@ -2,6 +2,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Str;
 
 class Plan extends Model {
 
@@ -19,4 +20,13 @@ class Plan extends Model {
         'free_limit',
         'extra_credit',
     ];
+    protected static function boot() {
+        parent::boot();
+
+        static::creating(function ($plan) {
+            if (empty($plan->slug)) {
+                $plan->slug = Str::slug($plan->name);
+            }
+        });
+    }
 }
