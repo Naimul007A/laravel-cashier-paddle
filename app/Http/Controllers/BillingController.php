@@ -5,13 +5,32 @@ use App\Models\Plan;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Laravel\Paddle\Cashier;
 
 class BillingController extends Controller {
     public function plans(Request $request) {
-        $plans = Plan::where('slug', '!=', 'free')->get();
+        $plans     = Plan::where('slug', '!=', 'free')->get();
+        $workspace = Auth::user()->workspace;
+
+        $currentPlanPaddleId = null;
+        $portalUrl           = null;
+        $response            = Cashier::api(
+            method: 'POST',
+            uri: "customers/ctm_01kjjcaxfgaevapmdsfj1mm85c/portal-sessions"
+        );
+
+        $url = $response['data']['urls']['general']['overview'] ?? null;
+
+        if ($workspace->subscribed('default')) {
+            $subscription        = $workspace->subscription('default');
+            $currentPlanPaddleId = $subscription->items->first()?->price_id;
+            $portalUrl           = $url;
+        }
 
         return Inertia::render('Billing/Plans', [
-            'plans' => $plans,
+            'plans'               => $plans,
+            'currentPlanPaddleId' => $currentPlanPaddleId,
+            'portalUrl'           => $portalUrl,
         ]);
     }
     public function checkout(Request $request) {

@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
-import { router } from '@inertiajs/vue3'
 import { initializePaddle } from '@paddle/paddle-js';
-import { Check, Minus, Zap } from 'lucide-vue-next';
+import { Check, Minus, Zap, ExternalLink } from 'lucide-vue-next';
 import { computed, ref } from 'vue';
 import AppLayout from '@/layouts/AppLayout.vue';
 import type { BreadcrumbItem } from '@/types';
@@ -20,10 +19,14 @@ type Plan = {
     credit_limit: number;
     free_limit: number;
     extra_credit: number;
+    paddle_monthly_price_id: string;
+    paddle_yearly_price_id: string;
 };
 
 const props = defineProps<{
     plans: Plan[];
+    currentPlanPaddleId: string | null;
+    portalUrl: string | null;
 }>();
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -58,55 +61,60 @@ function monthlyPrice(plan: Plan): string {
     return `$${plan.price}`;
 }
 
+function isCurrentPlan(plan: Plan): boolean {
+    if (!props.currentPlanPaddleId) return false;
+    return (
+        plan.paddle_monthly_price_id === props.currentPlanPaddleId ||
+        plan.paddle_yearly_price_id === props.currentPlanPaddleId
+    );
+}
+
 const displayedPlans = computed(() => props.plans);
 
 const popularPlan = 'pro-plus';
+
+const checkingOut = ref<number | null>(null);
+
 const checkout = async (plan_id: number) => {
-    const $response = await fetch(checkoutRoute().url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            plan_id: plan_id,
-            billing_cycle: billingCycle.value,
-        }),
-    });
-    const response = await $response.json();
-    console.log(response);
-    if (response.checkout && response.client_token) {
-        const paddle = await initializePaddle({
-            token: response.client_token,
-            pwCustomer: {
-                id: response.checkout.customer.id,
+    checkingOut.value = plan_id;
+    try {
+        const $response = await fetch(checkoutRoute().url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
             },
-            eventCallback: function (data) {
-                console.log(data);
-                if (data.name === "checkout.completed") {
-
-                    console.log("Payment successful!");
-                    // You can redirect
-                    window.location.href = "/dashboard";
-                    // OR refresh subscription status
-                    // OR show success message
-                }
-            },
-            environment: 'sandbox',
+            body: JSON.stringify({
+                plan_id: plan_id,
+                billing_cycle: billingCycle.value,
+            }),
         });
-        console.log(paddle);
-        if (paddle) {
-            paddle.Checkout.open({
-                items: response.checkout.items,
-                customer: {
-                    ...response.checkout.customer,
-                }
+        const response = await $response.json();
+        if (response.checkout && response.client_token) {
+            const paddle = await initializePaddle({
+                token: response.client_token,
+                pwCustomer: {
+                    id: response.checkout.customer.id,
+                },
+                eventCallback: function (data) {
+                    if (data.name === 'checkout.completed') {
+                        window.location.href = '/dashboard';
+                    }
+                },
+                environment: 'sandbox',
             });
-            console.log("paddle checkout open");
-
+            if (paddle) {
+                paddle.Checkout.open({
+                    items: response.checkout.items,
+                    customer: {
+                        ...response.checkout.customer,
+                    },
+                });
+            }
         }
-
+    } finally {
+        checkingOut.value = null;
     }
-}
+};
 </script>
 
 <template>
@@ -151,16 +159,36 @@ const checkout = async (plan_id: number) => {
                 </div>
             </div>
 
+            <!-- Manage Subscription (only when subscribed) -->
+            <div v-if="portalUrl" class="flex justify-center">
+                <a :href="portalUrl" target="_blank" rel="noopener noreferrer"
+                    class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition-all hover:bg-gray-50 hover:shadow-md dark:border-white/10 dark:bg-white/5 dark:text-gray-200 dark:hover:bg-white/10">
+                    <ExternalLink class="size-4" />
+                    Manage Subscription
+                </a>
+            </div>
+
             <!-- Plan cards -->
             <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
                 <div v-for="plan in displayedPlans" :key="plan.id" :class="[
                     'relative flex flex-col rounded-2xl border p-6 transition-shadow hover:shadow-lg',
-                    plan.paddle_id === popularPlan
-                        ? 'border-violet-500 bg-violet-50 shadow-violet-100 dark:bg-violet-950/30 dark:shadow-none'
-                        : 'border-gray-200 bg-white dark:border-white/10 dark:bg-white/5',
+                    isCurrentPlan(plan)
+                        ? 'border-emerald-500 bg-emerald-50 shadow-emerald-100 dark:bg-emerald-950/30 dark:shadow-none'
+                        : plan.paddle_id === popularPlan
+                            ? 'border-violet-500 bg-violet-50 shadow-violet-100 dark:bg-violet-950/30 dark:shadow-none'
+                            : 'border-gray-200 bg-white dark:border-white/10 dark:bg-white/5',
                 ]">
-                    <!-- Popular badge -->
-                    <div v-if="plan.paddle_id === popularPlan" class="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <!-- Current plan badge -->
+                    <div v-if="isCurrentPlan(plan)" class="absolute -top-3 left-1/2 -translate-x-1/2">
+                        <span
+                            class="flex items-center gap-1 rounded-full bg-emerald-600 px-3 py-1 text-xs font-semibold text-white shadow">
+                            <Check class="size-3" />
+                            Current Plan
+                        </span>
+                    </div>
+
+                    <!-- Popular badge (only when not the current plan) -->
+                    <div v-else-if="plan.paddle_id === popularPlan" class="absolute -top-3 left-1/2 -translate-x-1/2">
                         <span
                             class="flex items-center gap-1 rounded-full bg-violet-600 px-3 py-1 text-xs font-semibold text-white shadow">
                             <Zap class="size-3" />
@@ -193,15 +221,17 @@ const checkout = async (plan_id: number) => {
                     </div>
 
                     <!-- CTA -->
-                    <button @click="checkout(plan.id)" :class="[
-                        'mb-6 w-full rounded-xl py-2.5 text-sm font-semibold transition-all',
+                    <button v-if="isCurrentPlan(plan)" disabled
+                        class="mb-6 w-full cursor-default rounded-xl border border-emerald-300 bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-700 dark:border-emerald-600/40 dark:bg-emerald-900/20 dark:text-emerald-400">
+                        ✓ Current Plan
+                    </button>
+                    <button v-else @click="checkout(plan.id)" :disabled="checkingOut === plan.id" :class="[
+                        'mb-6 w-full rounded-xl py-2.5 text-sm font-semibold transition-all disabled:opacity-60',
                         plan.paddle_id === popularPlan
                             ? 'bg-violet-600 text-white hover:bg-violet-700 active:bg-violet-800'
-                            : plan.price === 0
-                                ? 'border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-gray-200 dark:hover:bg-white/10'
-                                : 'border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-gray-200 dark:hover:bg-white/10',
+                            : 'border border-gray-300 text-gray-700 hover:bg-gray-50 dark:border-white/20 dark:text-gray-200 dark:hover:bg-white/10',
                     ]">
-                        {{ plan.price === 0 ? 'Current plan' : 'Get started' }}
+                        {{ checkingOut === plan.id ? 'Loading…' : plan.price === 0 ? 'Get started' : 'Get started' }}
                     </button>
 
                     <!-- Divider -->
