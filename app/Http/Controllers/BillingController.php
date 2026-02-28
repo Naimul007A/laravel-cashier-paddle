@@ -8,7 +8,7 @@ use Inertia\Inertia;
 
 class BillingController extends Controller {
     public function plans(Request $request) {
-        $plans = Plan::all();
+        $plans = Plan::where('slug', '!=', 'free')->get();
 
         return Inertia::render('Billing/Plans', [
             'plans' => $plans,
