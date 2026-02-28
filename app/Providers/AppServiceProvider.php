@@ -1,14 +1,11 @@
 <?php
 namespace App\Providers;
 
-use App\Models\Subscription;
-use App\Models\Transaction;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
-use Laravel\Paddle\Cashier;
 
 class AppServiceProvider extends ServiceProvider {
     /**
@@ -23,8 +20,6 @@ class AppServiceProvider extends ServiceProvider {
      */
     public function boot(): void {
         $this->configureDefaults();
-        Cashier::useSubscriptionModel(Subscription::class);
-        Cashier::useTransactionModel(Transaction::class);
     }
 
     /**
