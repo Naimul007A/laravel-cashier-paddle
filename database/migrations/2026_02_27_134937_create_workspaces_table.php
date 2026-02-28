@@ -4,11 +4,13 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Run the migrations.
      */
-    public function up(): void {
+    public function up(): void
+    {
         Schema::create('workspaces', function (Blueprint $table) {
             $table->id();
             $table->string('name');                                                   // Index for search
@@ -20,6 +22,9 @@ return new class extends Migration {
             $table->integer('members_limit')->default(5);
             $table->integer('credit_limit')->default(100);
             $table->integer('free_limit')->default(-1);
+            $table->timestamp('subscribe_at');
+            $table->timestamp('next_bill_date');
+            $table->timestamp('next_credit_reset');
             $table->timestamps();
         });
     }
@@ -27,7 +32,8 @@ return new class extends Migration {
     /**
      * Reverse the migrations.
      */
-    public function down(): void {
+    public function down(): void
+    {
         Schema::dropIfExists('workspaces');
     }
 };
